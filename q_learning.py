@@ -35,7 +35,7 @@ def clean_and_train_svm(df, target_column):
     )
 
     # Model SVM — konfigurasi kompleks (overfitting rawan)
-    model = SVC(kernel='linear', C=100)
+    model = SVC(kernel='linear', C=1)
     model.fit(X_train, y_train)
 
     # Evaluasi training
