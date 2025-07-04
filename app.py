@@ -13,8 +13,29 @@ DATA_FILE = "data_input.csv"
 
 # Muat data yang sudah ada
 if os.path.exists(DATA_FILE):
-    df_all = pd.read_csv(DATA_FILE)
+    try:
+        df_all = pd.read_csv(DATA_FILE)
+        if df_all.shape[1] == 0:
+            raise ValueError("No columns found in CSV.")
+    except:
+        st.warning("📄 File kosong, mengisi dummy data.")
+        df_all = pd.DataFrame([
+            {
+                "Gender": "Male",
+                "Age": 22,
+                "Course": "CS",
+                "Year": 3,
+                "CGPA": 3.25,
+                "Marital": "Single",
+                "Depression": "Yes",
+                "Anxiety": "No",
+                "PanicAttack": "No",
+                "SeekHelp": "Yes"
+            }
+        ])
+        df_all.to_csv(DATA_FILE, index=False)
 else:
+    # Jika file tidak ada, buat DataFrame kosong
     df_all = pd.DataFrame(columns=[
         "Gender", "Age", "Course", "Year", "CGPA",
         "Marital", "Depression", "Anxiety", "PanicAttack", "SeekHelp"
