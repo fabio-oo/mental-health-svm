@@ -2,14 +2,23 @@ import streamlit as st
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import os
 from q_learning import clean_and_train_svm
 
 st.set_page_config(page_title="Mental Health SVM", layout="wide")
 st.title("🧠 Mental Health Prediction - Input & Train SVM")
 
-# Inisialisasi session state untuk menyimpan data
-if "data" not in st.session_state:
-    st.session_state["data"] = pd.DataFrame()
+# File penyimpanan lokal
+DATA_FILE = "data_input.csv"
+
+# Muat data yang sudah ada
+if os.path.exists(DATA_FILE):
+    df_all = pd.read_csv(DATA_FILE)
+else:
+    df_all = pd.DataFrame(columns=[
+        "Gender", "Age", "Course", "Year", "CGPA",
+        "Marital", "Depression", "Anxiety", "PanicAttack", "SeekHelp"
+    ])
 
 # Form input manual
 with st.form("input_form"):
@@ -40,27 +49,31 @@ with st.form("input_form"):
             "SeekHelp": seek_help
         }])
 
-        st.session_state["data"] = pd.concat([st.session_state["data"], new_data], ignore_index=True)
-        st.success("✅ Data berhasil ditambahkan!")
+        df_all = pd.concat([df_all, new_data], ignore_index=True)
+        df_all.to_csv(DATA_FILE, index=False)
+        st.success("✅ Data berhasil disimpan!")
 
-# Tampilkan data yang sudah dimasukkan
+# Tampilkan data
 st.subheader("📋 Data Terkumpul")
-st.dataframe(st.session_state["data"])
+st.dataframe(df_all)
 
-# Training SVM jika data > 20
-if len(st.session_state["data"]) >= 20:
+# Distribusi label
+if "Depression" in df_all.columns:
+    st.subheader("📊 Distribusi Label (Depression)")
+    st.bar_chart(df_all["Depression"].value_counts())
+
+# Training SVM jika cukup data
+if len(df_all) >= 20:
     st.subheader("🧠 Training SVM Model...")
 
     try:
-        # Target: Depression
-        result = clean_and_train_svm(st.session_state["data"], target_column="Depression")
+        result = clean_and_train_svm(df_all, target_column="Depression")
 
         st.success(f"✅ Train Accuracy: {result['train_accuracy']:.2f}")
         st.success(f"✅ Test Accuracy: {result['test_accuracy']:.2f}")
 
         st.subheader("📈 Classification Report")
         st.json(result["report"])
-        
 
         st.subheader("🧾 Confusion Matrix")
         fig, ax = plt.subplots()
@@ -70,4 +83,4 @@ if len(st.session_state["data"]) >= 20:
     except Exception as e:
         st.error(f"❌ Error saat melatih SVM: {e}")
 else:
-    st.info(f"🕒 Masukkan minimal 20 data untuk memulai training (sekarang: {len(st.session_state['data'])})")
+    st.info(f"🕒 Masukkan minimal 20 data untuk memulai training (sekarang: {len(df_all)})")
